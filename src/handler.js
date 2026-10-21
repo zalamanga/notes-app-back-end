@@ -1,116 +1,55 @@
-const { nanoid } = require('nanoid');
-const notes = require('./notes');
-
-const addNoteHandler = (request, h) => {
-  const { title, tags, body } = request.payload;
-
-  const id = nanoid(16);
-  const createdAt = new Date().toISOString();
-  const updatedAt = createdAt;
-
-  const newNote = {
-    title, tags, body, id, createdAt, updatedAt,
-  };
-
-  notes.push(newNote);
-
-  const isSuccess = notes.filter((note) => note.id === id).length > 0;
-
-  if (isSuccess) {
-    const response = h.response({
+const createNoteHandlers = (store) => ({
+  addNoteHandler: async (request, h) => {
+    const note = await store.add(request.payload);
+    return h.response({
       status: 'success',
       message: 'Catatan berhasil ditambahkan',
-      data: {
-        noteId: id,
-      },
-    });
-    response.code(201);
-    return response;
-  }
+      data: { noteId: note.id },
+    }).code(201);
+  },
 
-  const response = h.response({
-    status: 'fail',
-    message: 'Catatan gagal ditambahkan',
-  });
-  response.code(500);
-  return response;
-};
-const getAllNotesHandler = () => ({
-  status: 'success',
-  data: {
-    notes,
+  getAllNotesHandler: () => ({
+    status: 'success',
+    data: { notes: store.list() },
+  }),
+
+  getNoteByIdHandler: (request, h) => {
+    const note = store.find(request.params.id);
+    if (note) {
+      return { status: 'success', data: { note } };
+    }
+    return h.response({
+      status: 'fail',
+      message: 'Catatan tidak ditemukan',
+    }).code(404);
+  },
+
+  editNoteByIdHandler: async (request, h) => {
+    const note = await store.update(request.params.id, request.payload);
+    if (note) {
+      return {
+        status: 'success',
+        message: 'Catatan berhasil diperbarui',
+      };
+    }
+    return h.response({
+      status: 'fail',
+      message: 'Gagal memperbarui catatan. Id tidak ditemukan',
+    }).code(404);
+  },
+
+  deleteNoteByIdHandler: async (request, h) => {
+    if (await store.remove(request.params.id)) {
+      return {
+        status: 'success',
+        message: 'Catatan berhasil dihapus',
+      };
+    }
+    return h.response({
+      status: 'fail',
+      message: 'Catatan gagal dihapus. Id tidak ditemukan',
+    }).code(404);
   },
 });
-const getNoteByIdHandler = (request, h) => {
-  const { id } = request.params;
 
-  const note = notes.filter((n) => n.id === id)[0];
-  if (note !== undefined) {
-    return {
-      status: 'success',
-      data: {
-        note,
-      },
-    };
-  }
-  const response = h.response({
-    status: 'fail',
-    message: 'Catatan tidak ditemukan',
-  });
-  response.code(404);
-  return response;
-};
-const editNoteByIdHandler = (request, h) => {
-  const { id } = request.params;
-  const { title, tags, body } = request.payload;
-  const updatedAt = new Date().toISOString();
-  const index = notes.findIndex((note) => note.id === id);
-  if (index !== -1) {
-    notes[index] = {
-      ...notes[index],
-      title,
-      tags,
-      body,
-      updatedAt,
-    };
-    const response = h.response({
-      status: 'success',
-      message: 'Catatan berhasil diperbarui',
-    });
-    response.code(200);
-    return response;
-  }
-  const response = h.response({
-    status: 'fail',
-    message: 'Gagal memperbarui catatan. Id tidak ditemukan',
-  });
-  response.code(404);
-  return response;
-};
-const deleteNoteByIdHandler = (request, h) => {
-  const { id } = request.params;
-  const index = notes.findIndex((note) => note.id === id);
-  if (index !== -1) {
-    notes.splice(index, 1);
-    const response = h.response({
-      status: 'success',
-      message: 'Catatan berhasil dihapus',
-    });
-    response.code(200);
-    return response;
-  }
-  const response = h.response({
-    status: 'fail',
-    message: 'Catatan gagal dihapus. Id tidak ditemukan',
-  });
-  response.code(404);
-  return response;
-};
-
-module.exports = {
-  addNoteHandler,
-  getAllNotesHandler,
-  getNoteByIdHandler,
-  editNoteByIdHandler,
-  deleteNoteByIdHandler,
-};
+module.exports = { createNoteHandlers };

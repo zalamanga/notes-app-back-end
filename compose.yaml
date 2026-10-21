@@ -1,0 +1,25 @@
+services:
+  api:
+    build: .
+    init: true
+    stop_grace_period: 20s
+    ports:
+      - "127.0.0.1:${APP_PORT:-18087}:5000"
+    environment:
+      NODE_ENV: production
+      HOST: 0.0.0.0
+      PORT: "5000"
+      DATA_FILE: /app/data/notes.json
+      CORS_ORIGINS: "${CORS_ORIGINS:-*}"
+    volumes:
+      - notes-data:/app/data
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m,noexec,nosuid
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+
+volumes:
+  notes-data:
