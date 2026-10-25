@@ -1,5 +1,7 @@
 # Notes App Back End
 
+Alur request, validasi dan penyimpanan catatan dijelaskan di [CODE_FLOW](docs/CODE_FLOW.md).
+
 REST API catatan menggunakan Node.js dan Hapi. API menyediakan tambah, daftar, detail, ubah, dan hapus catatan melalui `/notes`. Project ini tidak memiliki halaman web atau endpoint `/books`; README lama tentang Bookshelf API telah dikoreksi.
 
 Kontrak respons CRUD dan pesan bahasa Indonesia dari source awal dipertahankan. Perbaikan mencakup validasi input, penyimpanan JSON yang bertahan setelah restart, konfigurasi melalui environment, Docker, dan tes otomatis.
